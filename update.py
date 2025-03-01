@@ -2,10 +2,10 @@ import requests
 import re
 from urllib.parse import urlparse
 
-# URL of the text file to download
+# OpenPhish public feed URL
 url = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
 
-# Output file
+# Output file for Pi-hole blocklist
 output_file = "modified_hosts.txt"
 
 def extract_domain(line):
@@ -15,19 +15,14 @@ def extract_domain(line):
     line = line.strip()
 
     # Ignore comments and empty lines
-    #if not line or line.startswith("#"):
-    #    return None
-
-    # If the line starts with an IP (e.g., "192.168.1.1 example.com"), remove the IP
-    #parts = line.split()
-    #if len(parts) > 1 and re.match(r"^\d{1,3}(\.\d{1,3}){3}$", parts[0]):
-    #    domain = parts[1]  # The second part is likely the domain
-    #else:
-    #    domain = parts[0]  # Assume it's already a domain or URL
+    if not line or line.startswith("#"):
+        return None
 
     # If it's a full URL (with http/https), extract just the domain
-    if domain.startswith(("http://", "https://")):
-        domain = urlparse(domain).netloc
+    if line.startswith(("http://", "https://")):
+        domain = urlparse(line).netloc
+    else:
+        domain = line  # Assume it's already a domain
 
     # Ensure it's a valid domain (no IPs, no paths)
     if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", domain):
@@ -59,4 +54,3 @@ def download_and_modify(url, output_file):
 
 # Run the function
 download_and_modify(url, output_file)
-
