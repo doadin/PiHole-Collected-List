@@ -28,9 +28,15 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add openphish_hosts.txt
-          git add phishtank_hosts.txt
-          git commit -m "Auto-update modified_hosts.txt" || echo "No changes to commit"
+
+          # Check if files exist before adding them
+          [ -f openphish_hosts.txt ] && git add openphish_hosts.txt
+          [ -f phishtank_hosts.txt ] && git add phishtank_hosts.txt
+
+          # Commit only if there are changes
+          git diff --staged --quiet || git commit -m "Auto-update hosts files"
+
+          # Push changes only if there was a commit
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
