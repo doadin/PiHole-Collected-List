@@ -56,9 +56,26 @@ def process_openphish(url, output_file):
     except requests.exceptions.RequestException as e:
         print(f"Error fetching OpenPhish data: {e}")
 
+def is_domain_only(url):
+    """
+    Checks if a given URL is just a domain without a path.
+    """
+    parsed_url = urlparse(url.strip())
+    
+    # If there's a netloc (domain) and no path, query, or fragment, it's a domain-only URL.
+    if parsed_url.netloc and not parsed_url.path and not parsed_url.query and not parsed_url.fragment:
+        domain = parsed_url.netloc
+        if domain.startswith("www."):
+            domain = domain[4:]  # Remove "www."
+        
+        # Ensure it's a valid domain (not an IP address)
+        if re.match(r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", domain):
+            return domain
+    return None
+
 def process_phishtank(url, output_file):
     """
-    Downloads and processes PhishTank CSV data.
+    Downloads and processes PhishTank CSV data, including only verified entries that are domain-only.
     """
     try:
         response = requests.get(url, timeout=10)
@@ -68,16 +85,22 @@ def process_phishtank(url, output_file):
         csv_reader = csv.reader(csv_lines)
 
         domains = set()
+        header_skipped = False  # Ensure we skip the header row
+
         for row in csv_reader:
-            if len(row) > 1:  # Ensure row has data
-                domain = extract_domain(row[1])  # Phishing URL is in column 2
+            if not header_skipped:  # Skip the header row
+                header_skipped = True
+                continue
+
+            if len(row) > 4 and row[4].strip().lower() == "yes":  # Only process verified URLs
+                domain = is_domain_only(row[1])  # Ensure it's only a domain, not a full URL
                 if domain:
                     domains.add(f"0.0.0.0 {domain}")
 
         with open(output_file, "w") as f:
             f.write("\n".join(sorted(domains)))
 
-        print(f"PhishTank list saved as '{output_file}' with {len(domains)} entries.")
+        print(f"PhishTank list saved as '{output_file}' with {len(domains)} verified domain-only entries.")
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching PhishTank data: {e}")
