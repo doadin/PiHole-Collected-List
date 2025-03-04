@@ -107,4 +107,4 @@ def process_phishtank(url, output_file):
 
 # Run both processors
 process_openphish(sources["openphish"], output_files["openphish"])
-process_phishtank(sources["phishtank"], output_files["phishtank"])
+#process_phishtank(sources["phishtank"], output_files["phishtank"])
